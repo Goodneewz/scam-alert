@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Will you be my Valentine? 💝</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #f4b8c8 0%, #f9cad7 40%, #f0a8be 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Nunito', sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── CONFETTI ── */
+    #confetti-container {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .confetti-piece {
+      position: absolute;
+      width: 8px; height: 10px;
+      opacity: 0;
+      border-radius: 2px;
+      animation: confettiFall linear forwards;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0.2; }
+    }
+
+    /* ── MAIN CARD ── */
+    #main-screen, #yes-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      position: relative;
+      z-index: 2;
+    }
+    #yes-screen { display: none; }
+
+    h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(1.6rem, 5vw, 2.6rem);
+      color: #c0395a;
+      margin-bottom: 24px;
+      text-shadow: 0 2px 8px rgba(192,57,90,0.15);
+    }
+
+    /* ── CAT SVGs ── */
+    .cat-wrap {
+      margin-bottom: 28px;
+      position: relative;
+      width: 160px;
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cat-wrap svg {
+      width: 140px;
+      height: 140px;
+      transition: transform 0.3s ease;
+    }
+
+    /* rain overlay for crying state */
+    .rain {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      border-radius: 50%;
+    }
+    .rain-drop {
+      position: absolute;
+      width: 2px;
+      background: linear-gradient(to bottom, transparent, #88bbdd);
+      border-radius: 2px;
+      animation: rainFall linear infinite;
+      opacity: 0;
+    }
+    @keyframes rainFall {
+      0%   { transform: translateY(-30px); opacity: 0.7; }
+      100% { transform: translateY(180px); opacity: 0; }
+    }
+
+    /* ── BUTTONS ── */
+    #btn-area {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+    }
+
+    #btn-yes {
+      background: #3db34a;
+      color: white;
+      border: none;
+      border-radius: 18px;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.8rem;
+      padding: 16px 44px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(61,179,74,0.35);
+      transition: transform 0.2s, box-shadow 0.2s, padding 0.4s, font-size 0.4s;
+      flex-shrink: 0;
+    }
+    #btn-yes:hover {
+      transform: scale(1.06);
+      box-shadow: 0 10px 28px rgba(61,179,74,0.45);
+    }
+    #btn-yes:active { transform: scale(0.97); }
+
+    #btn-no {
+      background: #c0392b;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      padding: 12px 26px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(192,57,43,0.3);
+      transition: all 0.3s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #btn-no:hover { filter: brightness(1.1); }
+
+    /* floating No button for last stage */
+    #btn-no.floating {
+      position: fixed;
+      z-index: 99;
+      transition: left 0.05s, top 0.05s;
+    }
+
+    /* ── YES SCREEN ── */
+    #yes-screen h2 {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      color: #c0395a;
+      margin-bottom: 30px;
+      text-shadow: 0 2px 8px rgba(192,57,90,0.2);
+    }
+    .hug-cats {
+      width: 200px;
+      height: 200px;
+    }
+
+    /* bounce animation on yes screen cat */
+    @keyframes bounceIn {
+      0%   { transform: scale(0.5); opacity: 0; }
+      60%  { transform: scale(1.1); opacity: 1; }
+      80%  { transform: scale(0.95); }
+      100% { transform: scale(1); }
+    }
+    .bounce-in { animation: bounceIn 0.7s cubic-bezier(.36,.07,.19,.97) forwards; }
+
+    /* floating hearts on yes screen */
+    .heart-float {
+      position: fixed;
+      font-size: 1.6rem;
+      animation: heartRise 3s ease-in forwards;
+      pointer-events: none;
+      z-index: 5;
+    }
+    @keyframes heartRise {
+      0%   { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-90vh) scale(0.5); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="confetti-container"></div>
+
+<!-- MAIN SCREEN -->
+<div id="main-screen">
+  <h1 id="main-title">Will you be my Valentine? 💕</h1>
+
+  <div class="cat-wrap" id="cat-wrap">
+    <!-- Cat SVG — normal state (bow, neutral face) -->
+    <svg id="cat-svg" viewBox="0 0 120 130" xmlns="http://www.w3.org/2000/svg">
+      <!-- body -->
+      <ellipse cx="60" cy="100" rx="34" ry="26" fill="#f0ede8" stroke="#ccc5b5" stroke-width="1.5"/>
+      <!-- head -->
+      <ellipse cx="60" cy="64" rx="36" ry="33" fill="#f0ede8" stroke="#ccc5b5" stroke-width="1.5"/>
+      <!-- bow -->
+      <g id="bow" transform="translate(60,32)">
+        <path d="M-16,-8 Q-8,-14 0,-8 Q-8,-2 -16,-8Z" fill="#4a7fc1" stroke="#3a6aaa" stroke-width="1"/>
+        <path d="M16,-8 Q8,-14 0,-8 Q8,-2 16,-8Z" fill="#4a7fc1" stroke="#3a6aaa" stroke-width="1"/>
+        <circle cx="0" cy="-8" r="4" fill="#5a8fd1"/>
+      </g>
+      <!-- ears -->
+      <ellipse cx="32" cy="45" rx="10" ry="12" fill="#f0ede8" stroke="#ccc5b5" stroke-width="1.5"/>
+      <ellipse cx="88" cy="45" rx="10" ry="12" fill="#f0ede8" stroke="#ccc5b5" stroke-width="1.5"/>
+      <!-- inner ears -->
+      <ellipse cx="32" cy="46" rx="5" ry="7" fill="#f5c6cf"/>
+      <ellipse cx="88" cy="46" rx="5" ry="7" fill="#f5c6cf"/>
+      <!-- eyes -->
+      <circle cx="48" cy="62" r="6" fill="white" stroke="#aaa" stroke-width="1"/>
+      <circle cx="72" cy="62" r="6" fill="white" stroke="#aaa" stroke-width="1"/>
+      <circle id="pupil-l" cx="49" cy="63" r="3.5" fill="#3a3a3a"/>
+      <circle id="pupil-r" cx="73" cy="63" r="3.5" fill="#3a3a3a"/>
+      <!-- rosy cheeks -->
+      <ellipse cx="38" cy="72" rx="8" ry="5" fill="#f5a0b0" opacity="0.55"/>
+      <ellipse cx="82" cy="72" rx="8" ry="5" fill="#f5a0b0" opacity="0.55"/>
+      <!-- nose -->
+      <path d="M58,73 Q60,76 62,73" stroke="#aaa" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <!-- mouth -->
+      <path id="cat-mouth" d="M50,80 Q60,87 70,80" stroke="#aaa" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <!-- whiskers -->
+      <line x1="22" y1="68" x2="44" y2="72" stroke="#ccc" stroke-width="1"/>
+      <line x1="22" y1="75" x2="44" y2="75" stroke="#ccc" stroke-width="1"/>
+      <line x1="76" y1="72" x2="98" y2="68" stroke="#ccc" stroke-width="1"/>
+      <line x1="76" y1="75" x2="98" y2="75" stroke="#ccc" stroke-width="1"/>
+      <!-- tail -->
+      <path d="M94,112 Q118,100 112,88" stroke="#ccc5b5" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- feet -->
+      <ellipse cx="44" cy="122" rx="13" ry="7" fill="#f0ede8" stroke="#ccc5b5" stroke-width="1.2"/>
+      <ellipse cx="76" cy="122" rx="13" ry="7" fill="#f0ede8" stroke="#ccc5b5" stroke-width="1.2"/>
+    </svg>
+    <div class="rain" id="rain-overlay"></div>
+  </div>
+
+  <div id="btn-area">
+    <button id="btn-yes" onclick="sayYes()">Yes</button>
+    <button id="btn-no" onclick="pressNo()">No</button>
+  </div>
+</div>
+
+<!-- YES SCREEN -->
+<div id="yes-screen">
+  <h2>Knew you would say yes! 🎉</h2>
+  <svg class="hug-cats bounce-in" viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg">
+    <!-- two cats hugging -->
+    <!-- left cat (brown/tan) -->
+    <ellipse cx="72" cy="130" rx="30" ry="22" fill="#c8935a" stroke="#a87040" stroke-width="1.5"/>
+    <ellipse cx="72" cy="95" rx="28" ry="26" fill="#c8935a" stroke="#a87040" stroke-width="1.5"/>
+    <ellipse cx="55" cy="75" rx="9" ry="11" fill="#c8935a" stroke="#a87040" stroke-width="1.5"/>
+    <ellipse cx="89" cy="75" rx="9" ry="11" fill="#c8935a" stroke="#a87040" stroke-width="1.5"/>
+    <circle cx="65" cy="93" r="5" fill="white"/>
+    <circle cx="79" cy="93" r="5" fill="white"/>
+    <circle cx="66" cy="94" r="2.5" fill="#3a3a3a"/>
+    <circle cx="80" cy="94" r="2.5" fill="#3a3a3a"/>
+    <ellipse cx="60" cy="104" rx="7" ry="4" fill="#f5a070" opacity="0.5"/>
+    <ellipse cx="84" cy="104" rx="7" ry="4" fill="#f5a070" opacity="0.5"/>
+    <path d="M65,108 Q72,113 79,108" stroke="#a87040" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <!-- right cat (white) -->
+    <ellipse cx="128" cy="132" rx="30" ry="22" fill="#f0ede8" stroke="#ccc5b5" stroke-width="1.5"/>
+    <ellipse cx="128" cy="97" rx="28" ry="26" fill="#f0ede8" stroke="#ccc5b5" stroke-width="1.5"/>
+    <ellipse cx="111" cy="77" rx="9" ry="11" fill="#f0ede8" stroke="#ccc5b5" stroke-width="1.5"/>
+    <ellipse cx="145" cy="77" rx="9" ry="11" fill="#f0ede8" stroke="#ccc5b5" stroke-width="1.5"/>
+    <circle cx="121" cy="95" r="5" fill="white" stroke="#ddd" stroke-width="0.5"/>
+    <circle cx="135" cy="95" r="5" fill="white" stroke="#ddd" stroke-width="0.5"/>
+    <circle cx="122" cy="96" r="2.5" fill="#3a3a3a"/>
+    <circle cx="136" cy="96" r="2.5" fill="#3a3a3a"/>
+    <ellipse cx="116" cy="106" rx="7" ry="4" fill="#f5a0b0" opacity="0.5"/>
+    <ellipse cx="140" cy="106" rx="7" ry="4" fill="#f5a0b0" opacity="0.5"/>
+    <path d="M121,110 Q128,115 135,110" stroke="#aaa" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <!-- arms hugging between them -->
+    <path d="M96,118 Q100,115 104,118" stroke="#c8935a" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M96,126 Q100,124 104,126" stroke="#f0ede8" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.8"/>
+    <!-- hearts floating above -->
+    <text x="76" y="58" font-size="18" fill="#e74c7c">❤</text>
+    <text x="110" y="50" font-size="14" fill="#ff6090">❤</text>
+    <text x="140" y="62" font-size="16" fill="#e74c7c">❤</text>
+    <!-- sparkles -->
+    <text x="50" y="118" font-size="12" fill="#f5c842">✦</text>
+    <text x="148" y="115" font-size="12" fill="#f5c842">✦</text>
+    <text x="95" y="68" font-size="10" fill="#f5c842">✦</text>
+  </svg>
+</div>
+
+<script>
+  // ── STATE ──
+  let noCount = 0;
+  const MAX_NO = 4; // after this the No button floats away
+
+  const noMessages = [
+    'No',
+    'Are you positive? 😢',
+    'If you say no, I will be really sad…',
+    'Don\'t do this to me…',
+    'Last chance! 🥺'
+  ];
+
+  const catStates = ['neutral', 'sad', 'sadder', 'crying', 'crying-rain'];
+
+  const btnYes = document.getElementById('btn-yes');
+  const btnNo  = document.getElementById('btn-no');
+  const catSvg = document.getElementById('cat-svg');
+  const rainOverlay = document.getElementById('rain-overlay');
+  const mainScreen = document.getElementById('main-screen');
+  const yesScreen  = document.getElementById('yes-screen');
+
+  // Yes button font sizes per noCount (grows bigger each time)
+  const yesSizes = ['1.8rem', '2.3rem', '2.9rem', '3.6rem', '4.5rem'];
+  const yesPads  = ['16px 44px', '20px 52px', '26px 64px', '32px 80px', '38px 100px'];
+
+  // ── DRAW CAT STATES ──
+  function setCatState(state) {
+    const mouth = document.getElementById('cat-mouth');
+    const bow   = document.getElementById('bow');
+    const rainOv = document.getElementById('rain-overlay');
+    rainOv.innerHTML = '';
+
+    if (state === 'neutral') {
+      // normal happy-ish mouth
+      mouth.setAttribute('d', 'M50,80 Q60,87 70,80');
+      mouth.setAttribute('stroke', '#aaa');
+      bow.style.display = '';
+      // normal pupils
+      document.getElementById('pupil-l').setAttribute('r', '3.5');
+      document.getElementById('pupil-r').setAttribute('r', '3.5');
+      // remove closed eyes lines if any
+      removeClosedEyes();
+    } else if (state === 'sad') {
+      // sad mouth — slightly downturned
+      mouth.setAttribute('d', 'M50,83 Q60,78 70,83');
+      mouth.setAttribute('stroke', '#aaa');
+      bow.style.display = '';
+      removeClosedEyes();
+    } else if (state === 'sadder') {
+      // more downturned, closed squint eyes
+      mouth.setAttribute('d', 'M50,85 Q60,79 70,85');
+      bow.style.display = 'none';
+      setClosedEyes('squint');
+    } else if (state === 'crying') {
+      mouth.setAttribute('d', 'M50,86 Q60,80 70,86');
+      bow.style.display = 'none';
+      setClosedEyes('cry');
+      // add tear drops
+      addTears();
+    } else if (state === 'crying-rain') {
+      mouth.setAttribute('d', 'M50,88 Q60,80 70,88');
+      bow.style.display = 'none';
+      setClosedEyes('cry');
+      addTears();
+      addRain();
+    }
+  }
+
+  function removeClosedEyes() {
+    ['closed-eye-l','closed-eye-r','tear-l','tear-r'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
+    document.getElementById('pupil-l').style.display = '';
+    document.getElementById('pupil-r').style.display = '';
+    // restore eye whites
+    const eyes = catSvg.querySelectorAll('circle[r="6"]');
+    eyes.forEach(e => e.style.display = '');
+  }
+
+  function setClosedEyes(type) {
+    removeClosedEyes();
+    document.getElementById('pupil-l').style.display = 'none';
+    document.getElementById('pupil-r').style.display = 'none';
+    const eyes = catSvg.querySelectorAll('circle');
+    // hide eye whites (r=6)
+    catSvg.querySelectorAll('circle').forEach(c => {
+      if (parseFloat(c.getAttribute('r')) === 6) c.style.display = 'none';
+    });
+
+    const ns = 'http://www.w3.org/2000/svg';
+    // left closed eye
+    const eyeL = document.createElementNS(ns, 'path');
+    eyeL.setAttribute('id', 'closed-eye-l');
+    if (type === 'squint') {
+      eyeL.setAttribute('d', 'M43,62 Q48,58 53,62');
+    } else {
+      eyeL.setAttribute('d', 'M42,62 Q48,57 54,62');
+    }
+    eyeL.setAttribute('stroke', '#888');
+    eyeL.setAttribute('stroke-width', '2');
+    eyeL.setAttribute('fill', 'none');
+    eyeL.setAttribute('stroke-linecap', 'round');
+    catSvg.appendChild(eyeL);
+
+    const eyeR = document.createElementNS(ns, 'path');
+    eyeR.setAttribute('id', 'closed-eye-r');
+    if (type === 'squint') {
+      eyeR.setAttribute('d', 'M67,62 Q72,58 77,62');
+    } else {
+      eyeR.setAttribute('d', 'M66,62 Q72,57 78,62');
+    }
+    eyeR.setAttribute('stroke', '#888');
+    eyeR.setAttribute('stroke-width', '2');
+    eyeR.setAttribute('fill', 'none');
+    eyeR.setAttribute('stroke-linecap', 'round');
+    catSvg.appendChild(eyeR);
+  }
+
+  function addTears() {
+    const ns = 'http://www.w3.org/2000/svg';
+    const tearL = document.createElementNS(ns, 'ellipse');
+    tearL.setAttribute('id', 'tear-l');
+    tearL.setAttribute('cx', '44');
+    tearL.setAttribute('cy', '73');
+    tearL.setAttribute('rx', '3');
+    tearL.setAttribute('ry', '5');
+    tearL.setAttribute('fill', '#88ccee');
+    tearL.setAttribute('opacity', '0.8');
+    catSvg.appendChild(tearL);
+
+    const tearR = document.createElementNS(ns, 'ellipse');
+    tearR.setAttribute('id', 'tear-r');
+    tearR.setAttribute('cx', '76');
+    tearR.setAttribute('cy', '73');
+    tearR.setAttribute('rx', '3');
+    tearR.setAttribute('ry', '5');
+    tearR.setAttribute('fill', '#88ccee');
+    tearR.setAttribute('opacity', '0.8');
+    catSvg.appendChild(tearR);
+  }
+
+  function addRain() {
+    for (let i = 0; i < 18; i++) {
+      const drop = document.createElement('div');
+      drop.className = 'rain-drop';
+      drop.style.left = Math.random() * 100 + '%';
+      drop.style.top = Math.random() * 30 + '%';
+      drop.style.height = (8 + Math.random() * 12) + 'px';
+      drop.style.animationDuration = (0.4 + Math.random() * 0.5) + 's';
+      drop.style.animationDelay = (Math.random() * 0.5) + 's';
+      drop.style.opacity = '0.7';
+      rainOverlay.appendChild(drop);
+    }
+  }
+
+  // ── PRESS NO ──
+  function pressNo() {
+    if (noCount >= MAX_NO) return;
+    noCount++;
+
+    // Update No button text
+    btnNo.textContent = noMessages[Math.min(noCount, noMessages.length - 1)];
+
+    // Grow Yes button
+    btnYes.style.fontSize = yesSizes[Math.min(noCount, yesSizes.length - 1)];
+    btnYes.style.padding  = yesPads[Math.min(noCount, yesPads.length - 1)];
+
+    // Update cat
+    setCatState(catStates[noCount]);
+
+    // On last click: make No tiny and float away
+    if (noCount === MAX_NO) {
+      makeBtnNoFloat();
+    }
+  }
+
+  function makeBtnNoFloat() {
+    btnNo.style.fontSize = '0.65rem';
+    btnNo.style.padding = '6px 12px';
+    btnNo.style.borderRadius = '20px';
+    btnNo.classList.add('floating');
+
+    // Position it randomly somewhere far
+    const safeZone = () => Math.random() < 0.5
+      ? Math.random() * 25        // near edge left or top
+      : 75 + Math.random() * 20;  // near edge right or bottom
+
+    btnNo.style.left = safeZone() + 'vw';
+    btnNo.style.top  = safeZone() + 'vh';
+
+    // Mouse escape logic
+    document.addEventListener('mousemove', evadeNo);
+    document.addEventListener('touchmove', evadeNoTouch, { passive: true });
+  }
+
+  function evadeNo(e) {
+    const rect = btnNo.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top  + rect.height / 2;
+    const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+
+    if (dist < 130) {
+      const angle = Math.atan2(cy - e.clientY, cx - e.clientX);
+      const push  = 120;
+      let nx = parseFloat(btnNo.style.left) + (Math.cos(angle) * push / window.innerWidth  * 100);
+      let ny = parseFloat(btnNo.style.top)  + (Math.sin(angle) * push / window.innerHeight * 100);
+      nx = Math.max(2, Math.min(90, nx));
+      ny = Math.max(2, Math.min(88, ny));
+      btnNo.style.left = nx + 'vw';
+      btnNo.style.top  = ny + 'vh';
+    }
+  }
+
+  function evadeNoTouch(e) {
+    const t = e.touches[0];
+    evadeNo({ clientX: t.clientX, clientY: t.clientY });
+  }
+
+  // ── SAY YES ──
+  function sayYes() {
+    mainScreen.style.display = 'none';
+    yesScreen.style.display  = 'flex';
+    yesScreen.style.flexDirection = 'column';
+    yesScreen.style.alignItems = 'center';
+    yesScreen.style.justifyContent = 'center';
+
+    // Remove floating No listener
+    document.removeEventListener('mousemove', evadeNo);
+    document.removeEventListener('touchmove', evadeNoTouch);
+    if (btnNo.classList.contains('floating')) btnNo.remove();
+
+    launchConfetti();
+    launchHearts();
+  }
+
+  // ── CONFETTI ──
+  function launchConfetti() {
+    const container = document.getElementById('confetti-container');
+    const colors = ['#f06292','#e91e63','#ad1457','#f48fb1','#fff','#fce4ec','#c62828','#ff80ab'];
+    for (let i = 0; i < 120; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + 'vw';
+      piece.style.top  = '-10px';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.width  = (5 + Math.random() * 8) + 'px';
+      piece.style.height = (7 + Math.random() * 10) + 'px';
+      piece.style.animationDuration  = (2 + Math.random() * 3) + 's';
+      piece.style.animationDelay     = (Math.random() * 1.5) + 's';
+      piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+      container.appendChild(piece);
+      piece.addEventListener('animationend', () => piece.remove());
+    }
+  }
+
+  // ── FLOATING HEARTS ──
+  function launchHearts() {
+    const emojis = ['❤️','💕','💝','💖','💗'];
+    for (let i = 0; i < 14; i++) {
+      setTimeout(() => {
+        const h = document.createElement('div');
+        h.className = 'heart-float';
+        h.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        h.style.left = (10 + Math.random() * 80) + 'vw';
+        h.style.bottom = '10vh';
+        h.style.animationDelay = Math.random() * 0.5 + 's';
+        document.body.appendChild(h);
+        h.addEventListener('animationend', () => h.remove());
+      }, i * 180);
+    }
+  }
+
+  // Init
+  setCatState('neutral');
+</script>
+</body>
+</html>
